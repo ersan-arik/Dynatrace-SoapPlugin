@@ -1,0 +1,177 @@
+CI/CD Pipeline
+
+Bu calismanin tamami Minikube ve Docker uzerinde yapilmistir.
+
+Install Docker >>
+
+$ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+$ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+$ sudo yum-config-manager --enable docker-ce-edge
+$ sudo yum makecache fast
+$ sudo yum -y install container-selinux
+$ sudo yum -y install docker-ce
+$ sudo systemctl start docker
+$ sudo docker run hello-world
+[root@lMTRedHat yum.repos.d]# docker version
+Client:
+ Version:           18.09.4
+ API version:       1.39
+ Go version:        go1.10.8
+ Git commit:        d14af54266
+ Built:             Wed Mar 27 18:34:51 2019
+ OS/Arch:           linux/amd64
+ Experimental:      false
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          18.09.4
+  API version:      1.39 (minimum version 1.12)
+  Go version:       go1.10.8
+  Git commit:       d14af54
+  Built:            Wed Mar 27 18:04:46 2019
+  OS/Arch:          linux/amd64
+  Experimental:     false
+
+Install VirtualBox >>
+
+[root@lMTRedHat ~]# cd /etc/yum.repos.d/
+[root@lMTRedHat yum.repos.d]# wget http://download.virtualbox.org/virtualbox/rpm/rhel/virtualbox.repo
+--2019-03-31 17:02:00--  http://download.virtualbox.org/virtualbox/rpm/rhel/virtualbox.repo
+Resolving download.virtualbox.org (download.virtualbox.org)... 184.25.99.20
+Connecting to download.virtualbox.org (download.virtualbox.org)|184.25.99.20|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 259 [text/plain]
+Saving to: ‘virtualbox.repo’
+
+100%[=========================================================================>] 259         --.-K/s   in 0s
+
+2019-03-31 17:02:01 (37.4 MB/s) - ‘virtualbox.repo’ saved [259/259]
+
+[root@lMTRedHat yum.repos.d]# yum update   #update packages
+
+Check that that you are running latest installed kernel version
+Output of following commands version numbers should match:
+
+[root@lMTRedHat yum.repos.d]# rpm -qa kernel |sort -V |tail -n 1
+kernel-3.10.0-957.el7.x86_64
+[root@lMTRedHat yum.repos.d]# uname -r
+3.10.0-957.el7.x86_64
+
+Install following dependency packages
+[root@lMTRedHat yum.repos.d]# rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+Retrieving https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+warning: /var/tmp/rpm-tmp.fx0lXl: Header V3 RSA/SHA256 Signature, key ID 352c64e5: NOKEY
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:epel-release-7-11                ################################# [100%]
+[root@lMTRedHat yum.repos.d]# yum install binutils gcc make patch libgomp glibc-headers glibc-devel kernel-headers kernel-devel dkms
+
+Install VirtualBox Latest Version 6.0 (currently 6.0.2)
+[root@lMTRedHat yum.repos.d]# yum install VirtualBox-6.0
+
+This command create automatically vboxusers group and VirtualBox user must be member of that group.
+This command also build needed kernel modules.
+Rebuild kernel modules with following command:
+[root@lMTRedHat yum.repos.d]# /etc/init.d/vboxdrv setup
+
+[root@lMTRedHat yum.repos.d]# KERN_DIR=/usr/src/kernels/3.10.0-957.10.1.el7.x86_64
+[root@lMTRedHat yum.repos.d]# export KERN_DIR
+
+
+ 
+Install Minikube >>
+
+[root@lMTRedHat ~]# mkdir minikube
+[root@lMTRedHat ~]# cd minikube
+[root@lMTRedHat minikube]# curl -Lo minikube https://storage.googleapis.com/minikube/releases/v1.0.0/minikube-linux-amd64
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 38.2M  100 38.2M    0     0  37.3M      0  0:00:01  0:00:01 --:--:-- 37.3M
+[root@lMTRedHat minikube]# chmod +x minikube
+[root@lMTRedHat minikube]# ls -lrt
+total 39212
+-rwxr-xr-x. 1 root root 40149464 Mar 31 09:45 minikube
+[root@lMTRedHat minikube]# sudo cp minikube /usr/local/bin/
+[root@lMTRedHat minikube]# rm minikube
+rm: remove regular file ‘minikube’? y
+
+
+Install Kubectl >>
+
+[root@lMTRedHat ~]# curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 41.1M  100 41.1M    0     0  46.7M      0 --:--:-- --:--:-- --:--:-- 46.7M
+
+Install Helm >>
+Helm is a package manager for Kubernetes. 
+It allows you to deploy Helm Charts (or packages) onto a K8s cluster with all the resources and dependencies needed for the application. 
+
+
+[root@lMTRedHat ~]# curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh; chmod 700 get_helm.sh; ./get_helm.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  7028  100  7028    0     0  22451      0 --:--:-- --:--:-- --:--:-- 22525
+Downloading https://kubernetes-helm.storage.googleapis.com/helm-v2.13.1-linux-amd64.tar.gz
+Preparing to install helm and tiller into /usr/local/bin
+helm installed into /usr/local/bin/helm
+tiller installed into /usr/local/bin/tiller
+which: no helm in (/sbin:/bin:/usr/sbin:/usr/bin)
+helm not found. Is /usr/local/bin on your $PATH?
+Failed to install helm
+        For support, go to https://github.com/helm/helm.
+
+Fork the Git Repo >>
+Now it’s time to make your own copy of the Kubernetes CI/CD repository on Github.
+
+[root@lMTRedHat ~]# yum install git
+
+[root@lMTRedHat ~]# git clone https://github.com/kenzanlabs/kubernetes-ci-cd
+Cloning into 'kubernetes-ci-cd'...
+remote: Enumerating objects: 3183, done.
+remote: Total 3183 (delta 0), reused 0 (delta 0), pack-reused 3183
+Receiving objects: 100% (3183/3183), 1.71 MiB | 3.35 MiB/s, done.
+Resolving deltas: 100% (1843/1843), done.
+
+Run a Test Pod >>
+
+1.Export VirtualBox variables
+[root@lMTRedHat yum.repos.d]# KERN_DIR=/usr/src/kernels/3.10.0-957.10.1.el7.x86_64
+[root@lMTRedHat yum.repos.d]# export KERN_DIR
+
+2.Start up the Kubernetes cluster with Minikube, giving it some extra resources.
+[root@lMTRedHat yum.repos.d]# /usr/local/bin/minikube start --memory 7000 --cpus 2 --kubernetes-version v1.6.0
+
+Minkube downloads a VM image to your host machine, in this case, Mint Linux, then it starts the VM that has all the kubernetes components in it.
+
+3.Connect to Minikube VM
+
+[root@lMTRedHat yum.repos.d]# minikube ssh
+                         _             _            
+            _         _ ( )           ( )           
+  ___ ___  (_)  ___  (_)| |/')  _   _ | |_      __  
+/' _ ` _ `\| |/' _ `\| || , <  ( ) ( )| '_`\  /'__`\
+| ( ) ( ) || || ( ) || || |\`\ | (_) || |_) )(  ___/
+(_) (_) (_)(_)(_) (_)(_)(_) (_)`\___/'(_,__/'`\____)
+$ ls
+$ pwd
+/home/docker
+$ docker images
+
+
+Create a Local Image Registry
+
+1.
+
+
+
+
+
+
+
+
+
+
+
+
+
